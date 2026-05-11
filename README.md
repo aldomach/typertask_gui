@@ -1,5 +1,6 @@
 # Auto Type GUI for KeePass XC
-![](https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgduvyl5aP1lSmZd56EYdbSNZrPjY7lG08ghSGGgPTS_4plFWFxIO6PxpOldpHCS6AZxkivi0AEgVUh-G9V8Gni3Xfgl4FY0hRerWMN85E2pj3HT0aR6LhpanOwEdB8V01uv2ChpNnIl729VZK-xFPm8OGomqf1V7JGF4_Ru_kHSHY-56eV-L2gTYu92KA/s320/20231113-175529_keepass_autotype_gui.png)
+
+<img width="1102" height="752" alt="image" src="https://github.com/user-attachments/assets/72e5b0cc-753e-4eeb-9616-091cd7846ad0" />
 
 Automatiza tus contraseñas con Auto Type GUI for KeePass XC
 
