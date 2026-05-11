@@ -108,7 +108,7 @@ class KeyButton(QPushButton):
         base = """
             QPushButton {
                 border-radius: 4px;
-                font-size: 9px;
+                font-size: 10px;
                 font-family: 'JetBrains Mono', 'Consolas', monospace;
                 padding: 1px 2px;
             }
@@ -122,7 +122,7 @@ class KeyButton(QPushButton):
         else:
             color = "background: #1e2d3d; color: #d4e8f8;"
         self.setStyleSheet(base + color)
-        self.setFont(QFont("JetBrains Mono", 8))
+        self.setFont(QFont("JetBrains Mono", 9))
 
 
 # ── Split hold key (Down / Up side by side) ───────────────────────────────────
@@ -172,7 +172,7 @@ class SplitModifierWidget(QWidget):
                 background: {color};
                 color: #a8c8e8;
                 border-radius: 3px;
-                font-size: 7px;
+                font-size: 8px;
                 font-family: 'JetBrains Mono', monospace;
                 padding: 0px;
             }}
@@ -213,7 +213,7 @@ class VirtualKeyboard(QWidget):
 
     def _build_ui(self):
         outer = QHBoxLayout(self)
-        outer.setContentsMargins(4, 2, 4, 2)   # less vertical padding
+        outer.setContentsMargins(4, 2, 2, 2)   # right margin tighter (2px vs 4px)
         outer.setSpacing(4)
 
         # Main keyboard block
@@ -236,15 +236,13 @@ class VirtualKeyboard(QWidget):
             nav_block.addWidget(_build_row(row, self._hold_state, self._emit))
         outer.addLayout(nav_block)
 
-        # Separator 2 — tighter spacing around it
-        outer.addSpacing(2)
+        # Separator 2 — zero extra spacing, flush against nav and numpad
         sep2 = QFrame()
         sep2.setFrameShape(QFrame.VLine)
         sep2.setStyleSheet("color: #3a5a7a;")
         outer.addWidget(sep2)
-        outer.addSpacing(2)
 
-        # Numpad cluster — no extra stretch, flush to bottom
+        # Numpad cluster — no margins, flush right
         num_block = QVBoxLayout()
         num_block.setSpacing(1)
         num_block.setContentsMargins(0, 0, 0, 0)

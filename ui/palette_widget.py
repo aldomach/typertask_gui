@@ -54,7 +54,7 @@ class _ShortcutBtn(QPushButton):
                 color: #90c0e0;
                 border: 1px solid #2a4a6a;
                 border-radius: 5px;
-                font-size: 10px;
+                font-size: 11px;
                 font-family: 'JetBrains Mono', monospace;
                 padding: 2px 6px;
                 text-align: left;
@@ -87,7 +87,7 @@ class ShortcutPalette(QWidget):
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet("""
             color: #5aafd4;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             font-family: 'JetBrains Mono', monospace;
             padding: 6px 0;
@@ -125,7 +125,7 @@ class ShortcutPalette(QWidget):
             hdr = QLabel(f"{icon}  {label_text}")
             hdr.setStyleSheet("""
                 color: #4a8abf;
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: bold;
                 font-family: 'JetBrains Mono', monospace;
                 padding: 2px 4px;
