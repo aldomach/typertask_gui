@@ -1,0 +1,161 @@
+# Typertask GUI — CHANGELOG
+
+---
+
+## v0.0.1 — Estado inicial (archivo original entregado)
+
+**Archivo:** `typertaskwa.py` (monolítico, 60 líneas)
+
+- Interfaz Tkinter con botones en grilla fija de 8 columnas
+- Campo de texto `tk.Text` sin autocompletado
+- Lista plana de ~50 atajos hardcodeados como strings
+- Botón "Enlaces" con `messagebox.showinfo`
+- Sin separación de lógica y UI
+- Sin teclado virtual
+- Sin categorización de atajos
+- Ventana de tamaño fijo `840x350`
+
+---
+
+## v1.0.0 — Refactor modular + PySide6 + teclado virtual
+
+**Commits equivalentes:**
+
+---
+
+### `feat: arquitectura modular — separar UI de lógica`
+
+**Archivos creados:**
+```
+typertask_gui_v2/
+├── main.py
+├── core/
+│   ├── __init__.py
+│   ├── shortcuts.py
+│   └── keyboard_layout.py
+└── ui/
+    ├── __init__.py
+    ├── main_window.py
+    ├── keyboard_widget.py
+    ├── editor_widget.py
+    └── palette_widget.py
+```
+
+**`core/shortcuts.py`**
+- Dataclass `Shortcut` con campos: `token`, `label`, `category`, `description`
+- Catálogo de 60 atajos con categorías: `modifier`, `hold`, `navigation`, `editing`, `timing`, `command`, `datetime`, `media`, `numpad`, `function`
+- Motor de autocompletado `get_suggestions(query)` con ranking: prefijo primero, luego substring
+- Helpers `all_tokens()` y `category_order()`
+
+**`core/keyboard_layout.py`**
+- Dataclass `Key` con campos: `normal`, `shifted`, `altgr`, `width`, `typertask_token`, `hold_pair`
+- Layout completo de teclado español con Ç: 6 filas (Esc+F-keys, números, QWERTY, ASDF, ZXCV, barra espaciadora)
+- Cluster de navegación `NAV_CLUSTER`: Ins/Home/PgUp, Del/End/PgDn, flechas ↑↓←→
+- Teclas modificadoras con `hold_pair=True`: Shift (×2), Ctrl (×2), Alt (×2), AltGr
+
+**`ui/keyboard_widget.py`**
+- `_HoldState`: rastreador de estado Down/Up por token de modificador
+- `KeyButton(QPushButton)`: botón de tecla con ancho proporcional (`UNIT=40px`), label de dos líneas (shifted/normal), estilo CSS oscuro
+- `SplitModifierWidget(QWidget)`: para teclas con `hold_pair=True`, renderiza dos botones lado a lado — `{xdown}` y `{xup}` — en el espacio de una tecla
+- `VirtualKeyboard(QWidget)`: ensambla filas del teclado + separador vertical + cluster de navegación, emite señal `key_pressed(str)`
+- Teclas sin token Typertask emiten el carácter literal
+
+**`ui/editor_widget.py`**
+- `AutocompletePopup(QListWidget)`: popup flotante con `Qt.ToolTip`, máximo 8 filas visibles, navegable con ↑↓, acepta con Tab/Enter, cierra con Esc
+- `SmartEditor(QPlainTextEdit)`: editor con autocompletado en tiempo real, detecta la palabra actual caminando hacia atrás desde el cursor hasta espacio/newline, reemplaza el fragmento al confirmar una sugerencia
+
+**`ui/palette_widget.py`**
+- `ShortcutPalette(QWidget)`: panel lateral scrollable con atajos agrupados por categoría
+- Header por categoría con icono y etiqueta en español
+- Botones de 2 columnas con tooltip mostrando token + descripción
+
+**`ui/main_window.py`**
+- Header fijo con logo y hint
+- Frame del teclado virtual en la parte superior
+- `QSplitter` horizontal: paleta (220px fija) + editor (expansible)
+- Fila de botones: Copiar al portapapeles / Limpiar
+- `QStatusBar` con mensajes de estado temporales (2s)
+- Conexión de señales: `keyboard.key_pressed` → `editor.insert_token`, `palette.shortcut_clicked` → `editor.insert_token`
+
+**`main.py`**
+- Entry point con `QApplication`, fuente global `JetBrains Mono 10`
+
+**Estética:**
+- Paleta oscura marina: fondo `#080f18`, teclas `#1e2d3d`, accent `#e07b39`
+- Tipografía: `JetBrains Mono` / `Consolas` como fallback
+- Tooltips unificados
+
+---
+
+## v1.1.0 — Pad numérico + depuración del catálogo de atajos
+
+### `feat: agregar teclado numérico al teclado virtual`
+
+**`core/keyboard_layout.py`**
+- Nueva constante `NUMPAD_ROWS` con 5 filas: `[NumLk / * -]`, `[7 8 9 +]`, `[4 5 6 (cont)]`, `[1 2 3 ↵]`, `[0(wide) . (cont)]`
+- Num0 con `width=2.0` (tecla ancha)
+
+**`ui/keyboard_widget.py`**
+- Import extendido: `from core.keyboard_layout import ROWS, NAV_CLUSTER, NUMPAD_ROWS, Key`
+- `_build_ui`: segundo separador vertical + bloque `num_block` con `NUMPAD_ROWS` a la derecha del cluster de navegación
+
+---
+
+### `feat: campo on_keyboard + agregar {ctrl} + limpiar paleta`
+
+**`core/shortcuts.py`**
+- Campo nuevo en `Shortcut`: `on_keyboard: bool = False`
+- Todos los atajos que tienen tecla física en el teclado virtual marcados con `on_keyboard=True` (modificadores, hold/release, navegación, edición, numpad, F-keys, Esc, Tab, Enter, Backspace, Delete, Insert)
+- Token nuevo: `{ctrl}` (alias de `{Control}`, `on_keyboard=False` → visible en paleta)
+- `{return}` marcado `on_keyboard=False` (no está en el teclado físico)
+- Catálogo sube a 61 atajos
+
+**`ui/palette_widget.py`**
+- Filtro aplicado en `_build_ui`: `if not s.on_keyboard` — la paleta solo muestra atajos que NO están ya en el teclado virtual
+- Resultado: la paleta muestra únicamente `{ctrl}`, `{return}`, delays, `=RUN:`, datetime tokens, y volumen (15 atajos)
+
+**Verificación de cobertura (todos presentes):**
+`{Control}` `{Shift}` `{Alt}` `{ctrl}` `{pagedown}` `{pageup}` `{enter}` `{return}` `{left}` `{right}` `{down}` `{up}` `{insert}` `{delete}` `{backspace}` `{F1}`–`{F12}` `{Num0}`–`{Num9}` `{VolumeMute}` `{VolumeUp}` `{VolumeDown}` `{controldown}` `{controlup}` `{shiftdown}` `{shiftup}` `{altdown}` `{altup}` `{delay=500}` `{delay=1000}` `{{yyyy}}` `{{yy}}` `{{mm}}` `{{dd}}` `{{hh}}` `{{uu}}`
+
+---
+
+## v1.2.0 — Autocompletado continuo + compresión visual del teclado
+
+### `fix: autocompletado no funciona sin espacio previo`
+
+**`ui/editor_widget.py`**
+- `_current_word()`: reescrito — el límite de palabra ahora incluye `}` (cierre de token) además de espacios y newlines. Permite autocompletar inmediatamente después de un token insertado sin necesidad de espacio (`{enter}{alt...` → detecta `{alt` correctamente)
+- Nuevo helper `_word_start() -> int`: extrae la lógica de posición de inicio para reutilizarla en `_insert_token`
+- `_insert_token()`: refactorizado para usar `_word_start()` en lugar de duplicar el bucle de búsqueda
+
+---
+
+### `fix: reducir altura de teclas y espaciado en teclado virtual`
+
+**`ui/keyboard_widget.py`**
+- `KeyButton.UNIT`: `40` → `32` px
+- `SplitModifierWidget.UNIT`: `40` → `32` px
+- `_build_row`: spacing entre teclas `2` → `1` px
+- `_build_ui`:
+  - `outer.setContentsMargins`: `(4,4,4,4)` → `(4,2,4,2)` (menos padding vertical)
+  - `outer.setSpacing`: `8` → `4` px
+  - Spacing de filas en todos los bloques: `2` → `1` px
+  - Separador entre nav y numpad: `outer.addSpacing(2)` a cada lado en lugar del spacing global
+  - `num_block.setContentsMargins(0,0,0,0)` explícito
+
+**`ui/main_window.py`**
+- `kb_layout.setContentsMargins`: `(8,6,8,6)` → `(8,2,8,2)` (frame del teclado más compacto)
+
+---
+
+## Resumen de archivos modificados por versión
+
+| Archivo | v1.0.0 | v1.1.0 | v1.2.0 |
+|---|---|---|---|
+| `core/shortcuts.py` | ✦ creado | ✎ on_keyboard + {ctrl} | — |
+| `core/keyboard_layout.py` | ✦ creado | ✎ NUMPAD_ROWS | — |
+| `ui/keyboard_widget.py` | ✦ creado | ✎ numpad render | ✎ UNIT + spacing |
+| `ui/editor_widget.py` | ✦ creado | — | ✎ boundary fix |
+| `ui/palette_widget.py` | ✦ creado | ✎ filtro on_keyboard | — |
+| `ui/main_window.py` | ✦ creado | — | ✎ kb margins |
+| `main.py` | ✦ creado | — | — |

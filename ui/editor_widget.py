@@ -113,18 +113,38 @@ class SmartEditor(QPlainTextEdit):
     # ── Autocomplete trigger ──────────────────────────────────────────────────
 
     def _current_word(self) -> str:
-        """Returns the partial token the user is typing (from last '{' to cursor)."""
+        """
+        Returns the fragment the user is currently typing, measured from the
+        cursor back to the nearest word-break.
+
+        Word-breaks are: whitespace, newline, OR the closing '}' of a previously
+        completed Typertask token.  This means after inserting '{enter}' the next
+        character immediately starts a new fragment — no space required.
+        """
         cursor = self.textCursor()
         text = self.toPlainText()
         pos = cursor.position()
-        # walk back to find opening brace or last space
         start = pos
         while start > 0:
             c = text[start - 1]
-            if c in (" ", "\n", "\t"):
+            # Stop at whitespace or right after a closing brace (end of a token)
+            if c in (" ", "\n", "\t", "\r") or c == "}":
                 break
             start -= 1
         return text[start:pos]
+
+    def _word_start(self) -> int:
+        """Return the start index of the current word (mirrors _current_word logic)."""
+        cursor = self.textCursor()
+        text = self.toPlainText()
+        pos = cursor.position()
+        start = pos
+        while start > 0:
+            c = text[start - 1]
+            if c in (" ", "\n", "\t", "\r") or c == "}":
+                break
+            start -= 1
+        return start
 
     def _on_text_changed(self):
         word = self._current_word()
@@ -144,15 +164,8 @@ class SmartEditor(QPlainTextEdit):
     def _insert_token(self, token: str):
         """Replace the current partial word with the chosen token."""
         cursor = self.textCursor()
-        text = self.toPlainText()
         pos = cursor.position()
-        # find start of current word
-        start = pos
-        while start > 0:
-            c = text[start - 1]
-            if c in (" ", "\n", "\t"):
-                break
-            start -= 1
+        start = self._word_start()
         cursor.setPosition(start)
         cursor.setPosition(pos, QTextCursor.KeepAnchor)
         cursor.insertText(token)

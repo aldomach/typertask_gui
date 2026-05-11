@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
         kb_frame = QFrame()
         kb_frame.setStyleSheet("background: #0d1820; border-bottom: 1px solid #1e3a55;")
         kb_layout = QHBoxLayout(kb_frame)
-        kb_layout.setContentsMargins(8, 6, 8, 6)
+        kb_layout.setContentsMargins(8, 2, 8, 2)
         kb_layout.addWidget(self._keyboard)
         root.addWidget(kb_frame)
 

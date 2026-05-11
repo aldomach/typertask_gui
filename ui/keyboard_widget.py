@@ -43,7 +43,7 @@ class _HoldState:
 # ── Key button ────────────────────────────────────────────────────────────────
 
 class KeyButton(QPushButton):
-    UNIT = 40   # pixels per width-unit
+    UNIT = 32   # pixels per width-unit
 
     def __init__(self, key: Key, hold_state: _HoldState,
                  emit: Callable[[str], None], parent=None):
@@ -129,7 +129,7 @@ class KeyButton(QPushButton):
 
 class SplitModifierWidget(QWidget):
     """Two narrow buttons: {xdown} on the left, {xup} on the right."""
-    UNIT = 40
+    UNIT = 32
 
     def __init__(self, key: Key, emit: Callable[[str], None], parent=None):
         super().__init__(parent)
@@ -188,7 +188,7 @@ def _build_row(keys: list[Key], hold_state: _HoldState,
     row_w = QWidget()
     layout = QHBoxLayout(row_w)
     layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(2)
+    layout.setSpacing(1)
     for key in keys:
         if key.hold_pair and key.typertask_token:
             layout.addWidget(SplitModifierWidget(key, emit))
@@ -213,12 +213,12 @@ class VirtualKeyboard(QWidget):
 
     def _build_ui(self):
         outer = QHBoxLayout(self)
-        outer.setContentsMargins(4, 4, 4, 4)
-        outer.setSpacing(8)
+        outer.setContentsMargins(4, 2, 4, 2)   # less vertical padding
+        outer.setSpacing(4)
 
         # Main keyboard block
         kb_block = QVBoxLayout()
-        kb_block.setSpacing(2)
+        kb_block.setSpacing(1)
         for row in ROWS:
             kb_block.addWidget(_build_row(row, self._hold_state, self._emit))
         outer.addLayout(kb_block)
@@ -231,20 +231,23 @@ class VirtualKeyboard(QWidget):
 
         # Navigation cluster
         nav_block = QVBoxLayout()
-        nav_block.setSpacing(2)
+        nav_block.setSpacing(1)
         for row in NAV_CLUSTER:
             nav_block.addWidget(_build_row(row, self._hold_state, self._emit))
         outer.addLayout(nav_block)
 
-        # Separator 2
+        # Separator 2 — tighter spacing around it
+        outer.addSpacing(2)
         sep2 = QFrame()
         sep2.setFrameShape(QFrame.VLine)
         sep2.setStyleSheet("color: #3a5a7a;")
         outer.addWidget(sep2)
+        outer.addSpacing(2)
 
-        # Numpad cluster
+        # Numpad cluster — no extra stretch, flush to bottom
         num_block = QVBoxLayout()
-        num_block.setSpacing(2)
+        num_block.setSpacing(1)
+        num_block.setContentsMargins(0, 0, 0, 0)
         for row in NUMPAD_ROWS:
             num_block.addWidget(_build_row(row, self._hold_state, self._emit))
         outer.addLayout(num_block)
